@@ -1,0 +1,17 @@
+% TRIAD_FFEI: Generates the panels of Figure 1.
+%   Comparison of retina-LGN 1-to-1 circuits, exhibiting 1) feedforward-E
+%   transmission only or 2) feedforward-E/I transmission (triad synapse).
+
+clear;
+
+% Generate voltage traces (panels A-B)
+triad_voltagetrace;
+
+clear;
+
+% Generate FC figures (panels (C-F))
+triad_fc(1);
+triad_fc(2);
+
+
+
