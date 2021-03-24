@@ -7,13 +7,13 @@ switch figure_num
     case 2
         triad_vs_injection;
     case 3
-        triad_Iscaling;
+        triad_iscaling;
     case 4
         triad_delay;
     case 5
         triad_multilayer;
     case 6
-        triad_XOR;
+        triad_xor;
     case 7
         triad_ampagabanmda;
     case 8
