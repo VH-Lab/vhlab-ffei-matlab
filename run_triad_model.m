@@ -1,4 +1,4 @@
-function [FC, FC_avg, FC_pct, post_spktrain, Vm] = run_triad_model(varargin)
+function [FC, FC_avg, FC_pct, post_spktrain, Vm, Ps_E, Ps_I, spktrain] = run_triad_model(varargin)
 % RUN_TRIAD_MODEL: Performs simulations of retina-LGN 1-to-1 circuit in
 % response to a Poisson input with a rectified sinusoidal rate. Returns
 % Poisson spike train output, voltage trace, FC at input frequency, FC over
@@ -9,7 +9,8 @@ function [FC, FC_avg, FC_pct, post_spktrain, Vm] = run_triad_model(varargin)
 PR = 100;
 F = 50;
 dt = 1e-4; % time bins
-tmax = 5;
+tmax = 5; % signal time
+tbuffer = 0; % "buffer" time after signal
 
 % Conductance parameters
 %Pmax_e = 1.6976e-7;
@@ -46,24 +47,28 @@ Im_amp = 0;
 assign(varargin{:});
 % typically: PR, F, tmax, dt, Pmax_e, tau1i, delay, alpha, Im_F, Im_amp... 
 
-tvec = 0:dt:tmax;
+% Time parameters that are adjusted after manual parameter assignment:
+t_total = tmax+tbuffer; % total trial length
+tsigvec = 0:dt:tmax; % time vector for signal
+tvec = 0:dt:t_total; % time vector for trial
 Nt = length(tvec); % number of time intervals
 
 % If sinusoidal direct current injection is present (Im_F and Im_amp are
 % assigned in function call), then nonzero Im is generated:
-Im = max(Im_amp * sin(2*pi*F*tvec), 0);
+Im = zeros(1,length(tvec));
+Im(1:length(tsigvec)) = max(Im_amp * sin(2*pi*F*tsigvec), 0);
 
     
 
 
 % Generate a Poisson spike train with input characteristics
-spktimes = spiketrain_sinusoidal(PR, F, 0, 0, tvec(1), tvec(end), dt);
+spktimes = spiketrain_sinusoidal(PR, F, 0, 0, 0, tmax, dt);
 spktrain = spiketimes2bins(spktimes, tvec);
 
 % Generate 50 noisy inputs
-noisy_input = poisson_spiketrain(dt, noise_rate, tmax, 1);
+noisy_input = poisson_spiketrain(dt, noise_rate, t_total, 1);
 for j=2:noise_N
-    noisy_input = noisy_input + poisson_spiketrain(dt, noise_rate, tmax, 1);
+    noisy_input = noisy_input + poisson_spiketrain(dt, noise_rate, t_total, 1);
 end
 % Scale the noisy input magnitude by original 1.6976e-7/75 (same as in figure 4)
 [Ps_E_noise] = ppsc_constantsum(noisy_input, noise_level*noise_base, tau1e, tau2e, 0, tau2i, delay, dt);

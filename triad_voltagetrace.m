@@ -1,7 +1,7 @@
 function [] = triad_voltagetrace(transmissiontype)
-% TRIAD_VOLTAGETRACE: Compares spiking behavior of FFE vs. FFEI triad
-% synapse circuit models in response to a Poisson input with rectified
-% sinusoidal rate (PR = 100Hz, F = 50Hz) (Figure 1).
+% TRIAD_VOLTAGETRACE: Generates figures comparing spiking behavior of FFE
+% vs. FFEI triad synapse circuit models in response to a Poisson input with
+% rectified sinusoidal rate (PR = 100Hz, F = 50Hz) (Figure 1).
 
 % Input characteristics
 PR = 100;  % peak rate of neuron recieving input
@@ -12,11 +12,6 @@ num_inputs = 1;
 
 tvec = 0:dt:tmax;
 rate = sin(2 * pi * tvec * F) * PR;
-
-% Generate Poisson spike train using input characteristics
-%spktrain = poisson_spiketrain_wave(dt, tmax, F, PR, num_inputs);
-spktimes = spiketrain_sinusoidal(PR, F, 0, 0, tvec(1), tvec(end), dt);
-spktrain = spiketimes2bins(spktimes, tvec);
 
 % Conductance parameters
 %Pmax_e = 6.7903;
@@ -29,60 +24,16 @@ elseif transmissiontype == 2
 else
     error('Error: Transmission type not correctly defined. Set input to 1 if examining FFE model, 2 if examining FFEI model.')
 end
-tau1e = 0.02; % 50ms % taufall
-tau2e = 0.001; % 1ms % taurise
-tau2i = tau2e; % 1ms
-delay = 0.001; % 1ms
 
-alpha = 1.25; % inhibitory current scaling constant
-
-% tau1 is fall time constant, tau2 is rise time constant
-% delay is the time between push and pull
-
-% push-pull conductance triggered by Poisson spike train
-[Ps_E, Ps_I] = ppsc_constantsum(spktrain(1,:), Pmax_e, tau1e, tau2e, tau1i, tau2i, delay, dt);
-
-
-% Simulate voltage behavior of a neuron recieving push-pull conductance
-% input
-
-% define integrate fire variables
-V_reset = -0.080; % -80mV
-V_e = -0.075; % -75mV
-V_th = -0.040; % -40mV
-Rm = 1.0e7; % membrane resistance
-tau_m = 1.0e-2; % time
-V_syn_e = 0; % synaptic resting potential (excitatory)
-V_syn_i = -0.08; % synaptic resting potential (inhibitory)
-rmgs = 0.25; % original: 0.05
-Nt = length(tvec); % number of time intervals
-
-Im = zeros(Nt, 1); % input current
-
-Vm = zeros(Nt, 1); % store membrane voltage at each time point
-Vm(1) = V_reset; % initial membrane voltage is V_reset
-
-post_spktrain = zeros(Nt, 1); % count spikes from Euler's method
-
-
-for t = 1:Nt-1 % Euler method
-    
-    if Vm(t) >= V_th
-        Vm(t+1) = V_reset;
-        post_spktrain(t) = 1;
-    else
-        dvdt = (-(Vm(t) - V_e) - (Rm * (Ps_E(t) * (Vm(t) - V_syn_e) + alpha * Ps_I(t) * (Vm(t) - V_syn_i))) + Rm*Im(t)) / tau_m;
-        Vm(t+1) = Vm(t) + dt * dvdt;
-    end
-end
-
-% sum conductances of multiple input neurons
+% Run triad synapse simulations using run_triad_model.m
+% spktrain: Poisson spike train input over time
+% Ps_E, Ps_I: excitatory (or inhibitory) conductance post-synapse due to
+%   spktrain
+% post_spktrain: spiking output over time
+% Vm: membrane potential of output neuron over time 
+[FC,FCavg,FCpct,post_spktrain,Vm,Ps_E,Ps_I,spktrain] = run_triad_model('F', F, 'tmax', tmax, 'Pmax_e', Pmax_e, 'tau1i', tau1i);
 
 spiketimes = find(post_spktrain) * dt;
-
-postrate = post_spktrain/dt;
-postrate_avg = mean(postrate);
-
 
 % For poster
 
