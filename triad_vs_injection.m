@@ -3,8 +3,10 @@
 
 % Generate voltage traces due to current injection (panel A)
 clear;
+disp('Generating voltage trace panels...')
 injection_voltagetrace;
 
 % Generate FC figures (panels B-D)
 clear;
+disp('Generating comparisons of FFE vs FFEI vs current injection...')
 injection_fc;

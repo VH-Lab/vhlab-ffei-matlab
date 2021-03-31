@@ -1,4 +1,4 @@
-function [FC, FC_avg, FC_pct, post_spktrain, Vm, Ps_E, Ps_I, spktrain] = run_triad_model(varargin)
+function [FC, FC_avg, FC_pct, post_spktrain, Vm, Ps_E, Ps_I, spktrain, I_syn, I_leak] = run_triad_model(varargin)
 % RUN_TRIAD_MODEL: Performs simulations of retina-LGN 1-to-1 circuit in
 % response to a Poisson input with a rectified sinusoidal rate. Returns
 % Poisson spike train output, voltage trace, FC at input frequency, FC over
@@ -43,9 +43,13 @@ noise_N = 50; % number of noisy inputs
 % define parameters for rectified sinusoidal current injection (if any)
 Im_amp = 0;
 
+% define parameters for a specified spiking input e.g. spike train of
+% constant uniform rate (if any)
+manual_signal = 0;
+
 % Assign values to any parameters specified in function call:
 assign(varargin{:});
-% typically: PR, F, tmax, dt, Pmax_e, tau1i, delay, alpha, Im_F, Im_amp... 
+% typically: PR, F, tmax, dt, Pmax_e, tau1i, delay, alpha, Im_F, Im_amp...
 
 % Time parameters that are adjusted after manual parameter assignment:
 t_total = tmax+tbuffer; % total trial length
@@ -58,12 +62,19 @@ Nt = length(tvec); % number of time intervals
 Im = zeros(1,length(tvec));
 Im(1:length(tsigvec)) = max(Im_amp * sin(2*pi*F*tsigvec), 0);
 
-    
 
 
-% Generate a Poisson spike train with input characteristics
-spktimes = spiketrain_sinusoidal(PR, F, 0, 0, 0, tmax, dt);
-spktrain = spiketimes2bins(spktimes, tvec);
+if manual_signal == 0 % if no manual spiking signal is provided ->
+    % Generate a Poisson spike train with input characteristics
+    spktimes = spiketrain_sinusoidal(PR, F, 0, 0, 0, tmax, dt);
+    spktrain = spiketimes2bins(spktimes, tvec);
+else
+    if length(manual_signal) == Nt
+        spktrain = manual_signal;
+    else
+        error('Error: Manually-inputted signal is ' + num2str(length(manual_signal)) + ' time units in length, while trial is ' + num2str(Nt) + ' time units in length.')
+    end
+end
 
 % Generate 50 noisy inputs
 noisy_input = poisson_spiketrain(dt, noise_rate, t_total, 1);
@@ -86,6 +97,9 @@ Vm(1) = V_reset; % initial membrane voltage is V_reset
 tspk = []; % count spikes from Euler's method
 post_spktrain = zeros(Nt, 1);
 
+% Track current behavior
+I_leak = zeros(Nt, 1);
+I_syn = zeros(Nt, 1);
 
 for t = 1:Nt-1 % Euler method
     
@@ -94,7 +108,11 @@ for t = 1:Nt-1 % Euler method
         tspk = [tspk; t*dt];
         post_spktrain(t) = 1;
     else
-        dvdt = (-(Vm(t) - V_e) - (Rm * ((Ps_E(t) + Ps_E_noise(t)) * (Vm(t) - V_syn_e) + alpha * Ps_I(t) * (Vm(t) - V_syn_i))) + Rm*Im(t)) / tau_m;
+        %dvdt = (-(Vm(t) - V_e) - (Rm * ((Ps_E(t) + Ps_E_noise(t)) * (Vm(t) - V_syn_e) + alpha * Ps_I(t) * (Vm(t) - V_syn_i))) + Rm*Im(t)) / tau_m;
+        
+        I_leak(t) = -(Vm(t) - V_e)/Rm;
+        I_syn(t) = (Ps_E(t) + Ps_E_noise(t)) * (V_syn_e - Vm(t)) + Ps_I(t) * (V_syn_i - Vm(t)) * alpha;
+        dvdt = (Rm * (I_leak(t) + I_syn(t) + Im(t))) / tau_m;
         Vm(t+1) = Vm(t) + dt * dvdt;
     end
 end
