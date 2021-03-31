@@ -20,7 +20,7 @@ spktrain(round(1/(4*F)/dt):round(1/F/dt):end) = 1;
 %   spktrain
 % post_spktrain: spiking output over time
 % Vm: membrane potential of output neuron over time 
-[~,~,~,~,Vm_noreset,Ps_E,Ps_I,input, I_syn_noreset, I_leak_noreset] = run_triad_model(0, 'manual_signal', spktrain, 'tmax', tmax, 'dt', dt, 'Pmax_e', Pmax_e, 'tau1i', tau1i, 'alpha', alpha);
+[~,~,~,~,Vm_noreset,Ps_E,Ps_I,input, ~, I_syn_noreset, I_leak_noreset] = run_triad_model(0, 'manual_signal', spktrain, 'tmax', tmax, 'dt', dt, 'Pmax_e', Pmax_e, 'tau1i', tau1i, 'alpha', alpha);
 
 % Plot model behavior without Vm resets
 figure;

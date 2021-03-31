@@ -1,4 +1,4 @@
-function [FC, FC_avg, FC_pct, post_spktrain, Vm, Ps_E, Ps_I, spktrain, I_syn, I_leak] = run_triad_model(is_spike_present, varargin)
+function [FC, FC_avg, FC_pct, post_spktrain, Vm, Ps_E, Ps_I, spktrain, noisy_input, I_syn, I_leak] = run_triad_model(is_spike_present, varargin)
 % RUN_TRIAD_MODEL: Performs simulations of retina-LGN 1-to-1 circuit in
 % response to a Poisson input with a rectified sinusoidal rate. Returns
 % Poisson spike train output, voltage trace, FC at input frequency, FC over
