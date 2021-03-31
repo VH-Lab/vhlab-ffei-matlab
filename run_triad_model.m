@@ -49,8 +49,9 @@ noise_N = 50; % number of noisy inputs
 Im_amp = 0;
 
 % define parameters for a specified spiking input e.g. spike train of
-% constant uniform rate (if any)
+% constant uniform rate, custom signal or noise (if any)
 manual_signal = 0;
+manual_noise = 0;
 
 % Assign values to any parameters specified in function call:
 assign(varargin{:});
@@ -81,14 +82,22 @@ else
     end
 end
 
-% Generate 50 noisy inputs
-noisy_input = poisson_spiketrain(dt, noise_rate, t_total, 1);
-for j=2:noise_N
-    noisy_input = noisy_input + poisson_spiketrain(dt, noise_rate, t_total, 1);
+if manual_noise == 0
+    % Generate 50 noisy inputs
+    noisy_input = poisson_spiketrain(dt, noise_rate, t_total, 1);
+    for j=2:noise_N
+        noisy_input = noisy_input + poisson_spiketrain(dt, noise_rate, t_total, 1);
+    end
+else
+    if length(manual_noise) == Nt
+        noisy_input = manual_noise;
+    else
+        error(['Error: Manually-inputted noise is ' num2str(length(manual_noise)) ' time units in length, while trial is ' num2str(Nt) ' time units in length.'])
+    end
 end
+
 % Scale the noisy input magnitude by original 1.6976e-7/75 (same as in figure 4)
 [Ps_E_noise] = ppsc_constantsum(noisy_input, noise_level*noise_base, tau1e, tau2e, 0, tau2i, delay, dt);
-
 
 % Calculate synaptic conductance due to spike train using
 % ppsc_constantsum.m
