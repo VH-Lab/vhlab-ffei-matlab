@@ -1,8 +1,13 @@
-function [FC, FC_avg, FC_pct, post_spktrain, Vm, Ps_E, Ps_I, spktrain, I_syn, I_leak] = run_triad_model(varargin)
+function [FC, FC_avg, FC_pct, post_spktrain, Vm, Ps_E, Ps_I, spktrain, I_syn, I_leak] = run_triad_model(is_spike_present, varargin)
 % RUN_TRIAD_MODEL: Performs simulations of retina-LGN 1-to-1 circuit in
 % response to a Poisson input with a rectified sinusoidal rate. Returns
 % Poisson spike train output, voltage trace, FC at input frequency, FC over
 % all frequencies, and normalized FC.
+% Inputs can vary depending on which parameters are modified in the model
+% (see how assign.m in vhlab toolbox is used when calling functions).
+% When examining the behavior of the model, the parameter is_spike_present
+% determines whether the desired model is spiking (1, Vm resets at the
+% threshold) or non-spiking (0, Vm does not reset).
 
 
 % Input characteristics
@@ -72,7 +77,7 @@ else
     if length(manual_signal) == Nt
         spktrain = manual_signal;
     else
-        error('Error: Manually-inputted signal is ' + num2str(length(manual_signal)) + ' time units in length, while trial is ' + num2str(Nt) + ' time units in length.')
+        error(['Error: Manually-inputted signal is ' num2str(length(manual_signal)) ' time units in length, while trial is ' num2str(Nt) ' time units in length.'])
     end
 end
 
@@ -101,7 +106,23 @@ post_spktrain = zeros(Nt, 1);
 I_leak = zeros(Nt, 1);
 I_syn = zeros(Nt, 1);
 
+% Track behavior when spiking is removed from the model
+Vm_noreset = Vm;
+I_leak_noreset = I_leak;
+I_syn_noreset = I_syn;
+
+
 for t = 1:Nt-1 % Euler method
+    
+    I_syn_noreset_e = (Ps_E(t) + Ps_E_noise(t)) * (V_syn_e - Vm_noreset(t));
+    I_syn_noreset_i = Ps_I(t) * (V_syn_i - Vm_noreset(t)) * alpha; % multiply inhibitory current by alpha
+    I_syn_noreset(t) = I_syn_noreset_e + I_syn_noreset_i; 
+    I_leak_noreset(t) = -(Vm_noreset(t) - V_e)/Rm;
+    dvdt_noreset = (Rm * (I_leak_noreset(t) + I_syn_noreset(t) + Im(t))) / tau_m;
+    Vm_noreset(t+1) = Vm_noreset(t) + dt * dvdt_noreset;
+    
+    I_leak(t) = -(Vm(t) - V_e)/Rm;
+    I_syn(t) = (Ps_E(t) + Ps_E_noise(t)) * (V_syn_e - Vm(t)) + Ps_I(t) * (V_syn_i - Vm(t)) * alpha;
     
     if Vm(t) >= V_th
         Vm(t+1) = V_reset;
@@ -109,12 +130,17 @@ for t = 1:Nt-1 % Euler method
         post_spktrain(t) = 1;
     else
         %dvdt = (-(Vm(t) - V_e) - (Rm * ((Ps_E(t) + Ps_E_noise(t)) * (Vm(t) - V_syn_e) + alpha * Ps_I(t) * (Vm(t) - V_syn_i))) + Rm*Im(t)) / tau_m;
-        
-        I_leak(t) = -(Vm(t) - V_e)/Rm;
-        I_syn(t) = (Ps_E(t) + Ps_E_noise(t)) * (V_syn_e - Vm(t)) + Ps_I(t) * (V_syn_i - Vm(t)) * alpha;
         dvdt = (Rm * (I_leak(t) + I_syn(t) + Im(t))) / tau_m;
         Vm(t+1) = Vm(t) + dt * dvdt;
     end
+end
+
+if is_spike_present == 0 % If the desired model is non-spiking, output non-spiking model behavior
+    Vm = Vm_noreset;
+    I_syn = I_syn_noreset;
+    I_leak = I_leak_noreset;
+elseif is_spike_present ~= 1 % If desired model is spiking, behavior of spiking model is outputted by default; this error statement is just here to ensure that is_leak_present was inputted as a boolean.
+    error("Error: Invalid input for the boolean is_leak_present (must input 0 or 1).")
 end
 
 % Calculate fourier coefficients as the firing rate following a particular

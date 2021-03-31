@@ -18,7 +18,7 @@ rate = sin(2 * pi * tvec * F) * PR;
 %   spktrain
 % post_spktrain: spiking output over time
 % Vm: membrane potential of output neuron over time 
-[FC,FCavg,FCpct,post_spktrain,Vm,Ps_E,Ps_I,spktrain] = run_triad_model('F', F, 'tmax', tmax, 'Pmax_e', Pmax_e, 'tau1i', tau1i, 'delay', delay);
+[~,~,~,post_spktrain,Vm,Ps_E,Ps_I,spktrain] = run_triad_model(1, 'F', F, 'tmax', tmax, 'Pmax_e', Pmax_e, 'tau1i', tau1i, 'delay', delay);
 
 spiketimes = find(post_spktrain) * dt;
 
@@ -49,6 +49,8 @@ txt_x = [num2str((scaletime2-scaletime1)*1000),'ms'];
 txt_y = [num2str(scalerate2-scalerate1),'Hz'];
 text(0.218, 135, txt_x);
 text(0.1925, 163, txt_y);
+
+title(['delay = ' num2str(delay*1000) 'ms'])
 
 % title("Poisson spike train for periodic input")
 % xlabel("Time (s)")

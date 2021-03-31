@@ -60,7 +60,7 @@ for freq = 1:length(F)
         
         for n = 1:num_inputs
             
-            [FC1, FC2, FC3] = run_triad_model('dt', dt, 'F', F(freq), 'tmax', tmax, 'Pmax_e', Pmax_e(tau), 'tau1i', tau1i(tau), 'noise_level', noise_level, 'alpha', alpha(tau));
+            [FC1, FC2, FC3] = run_triad_model(1, 'dt', dt, 'F', F(freq), 'tmax', tmax, 'Pmax_e', Pmax_e(tau), 'tau1i', tau1i(tau), 'noise_level', noise_level, 'alpha', alpha(tau));
             
             FC_n(n) = FC1;
             FC_a(n) = FC2;

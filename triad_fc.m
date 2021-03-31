@@ -47,10 +47,10 @@ for freq = 1:length(F)
             
             % use when comparing different tau1i
             if comparison == 1
-                [FC1,FC2,FC3] = run_triad_model('F', F(freq), 'tmax', tmax, 'Pmax_e', Pmax_e(tau), 'tau1i', tau1i(tau));
+                [FC1,FC2,FC3] = run_triad_model(1, 'F', F(freq), 'tmax', tmax, 'Pmax_e', Pmax_e(tau), 'tau1i', tau1i(tau));
             elseif comparison == 2
             % use when comparing balanced E/I over output power
-                [FC1,FC2,FC3] = run_triad_model('F', F(freq), 'tmax', tmax, 'Pmax_e', Pmax_e(1)*Pmax_factor_ffei(tau), 'tau1i', tau1i(1));
+                [FC1,FC2,FC3] = run_triad_model(1, 'F', F(freq), 'tmax', tmax, 'Pmax_e', Pmax_e(1)*Pmax_factor_ffei(tau), 'tau1i', tau1i(1));
             else
                 error('Error: Comparision type not correctly defined. Set input to 1 if comparing models over tau1i, 2 if comparing over output power.')
             end
@@ -175,7 +175,7 @@ elseif comparison == 2
             
             for n = 1:num_inputs
 
-                [FC1,FC2,FC3] = run_triad_model('F', F(freq), 'tmax', tmax, 'Pmax_e', Pmax_e(5)*Pmax_factor_ffe(tau), 'tau1i', tau1i(5));
+                [FC1,FC2,FC3] = run_triad_model(1, 'F', F(freq), 'tmax', tmax, 'Pmax_e', Pmax_e(5)*Pmax_factor_ffe(tau), 'tau1i', tau1i(5));
                 
                 FC_n(n) = FC1;
                 FC_a(n) = FC2;

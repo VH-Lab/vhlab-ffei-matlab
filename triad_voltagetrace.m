@@ -31,7 +31,7 @@ end
 %   spktrain
 % post_spktrain: spiking output over time
 % Vm: membrane potential of output neuron over time 
-[FC,FCavg,FCpct,post_spktrain,Vm,Ps_E,Ps_I,spktrain] = run_triad_model('F', F, 'tmax', tmax, 'Pmax_e', Pmax_e, 'tau1i', tau1i);
+[~,~,~,post_spktrain,Vm,Ps_E,Ps_I,spktrain] = run_triad_model(1, 'F', F, 'tmax', tmax, 'Pmax_e', Pmax_e, 'tau1i', tau1i);
 
 spiketimes = find(post_spktrain) * dt;
 
@@ -107,6 +107,8 @@ plot([0 tmax], [-0.15 -0.15], 'Color', 'black', 'HandleVisibility','off')
 set(gca, 'Visible', 'off')
 legend("Input rate", "Membrane potential", "Spike present", 'Location', 'northwest')
 legend(gca,'show')
+
+
 
 scalev1 = 0.075;
 scalev2 = 0.125;
