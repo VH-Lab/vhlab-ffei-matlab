@@ -1,8 +1,10 @@
-function [FC, FC_avg, FC_pct, post_spktrain, Vm, Ps_E, Ps_I, spktrain, noisy_input, I_syn, I_leak] = run_triad_model(is_spike_present, varargin)
+function [output] = run_triad_model(is_spike_present, varargin)
 % RUN_TRIAD_MODEL: Performs simulations of retina-LGN 1-to-1 circuit in
 % response to a Poisson input with a rectified sinusoidal rate. Returns
-% Poisson spike train output, voltage trace, FC at input frequency, FC over
-% all frequencies, and normalized FC.
+% FC at input frequency, FC over all frequencies, normalized FC, Poisson
+% spike train output, voltage trace, E/I synaptic conductance, input spike
+% train, summed noisy input spikes, synaptic current, and leak current
+% (contained in a struct (output)).
 % Inputs can vary depending on which parameters are modified in the model
 % (see how assign.m in vhlab toolbox is used when calling functions).
 % When examining the behavior of the model, the parameter is_spike_present
@@ -73,10 +75,10 @@ Im(1:length(tsigvec)) = max(Im_amp * sin(2*pi*F*tsigvec), 0);
 if manual_signal == 0 % if no manual spiking signal is provided ->
     % Generate a Poisson spike train with input characteristics
     spktimes = spiketrain_sinusoidal(PR, F, 0, 0, 0, tmax, dt);
-    spktrain = spiketimes2bins(spktimes, tvec);
+    input_spktrain = spiketimes2bins(spktimes, tvec);
 else
     if length(manual_signal) == Nt
-        spktrain = manual_signal;
+        input_spktrain = manual_signal;
     else
         error(['Error: Manually-inputted signal is ' num2str(length(manual_signal)) ' time units in length, while trial is ' num2str(Nt) ' time units in length.'])
     end
@@ -101,7 +103,7 @@ end
 
 % Calculate synaptic conductance due to spike train using
 % ppsc_constantsum.m
-[Ps_E, Ps_I] = ppsc_constantsum(spktrain, Pmax_e, tau1e, tau2e, tau1i, tau2i, delay, dt);
+[Ps_E, Ps_I] = ppsc_constantsum(input_spktrain, Pmax_e, tau1e, tau2e, tau1i, tau2i, delay, dt);
 
 % Simulate voltage behavior of a neuron recieving push-pull conductance
 % input
@@ -165,5 +167,7 @@ if FC_avg == 0
 else
     FC_pct = FC/FC_avg; % Otherwise, perform normalization by dividing output power at F (FC) by average overall power (FC_avg)
 end
+
+output = var2struct('FC', 'FC_avg', 'FC_pct', 'post_spktrain', 'Vm', 'Ps_E', 'Ps_I', 'input_spktrain', 'noisy_input', 'I_syn', 'I_leak');
 
 end

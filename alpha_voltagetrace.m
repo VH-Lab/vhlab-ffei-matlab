@@ -15,12 +15,20 @@ spktrain = zeros(1,Nt);
 spktrain(round(1/(4*F)/dt):round(1/F/dt):end) = 1;
 
 % Run triad synapse simulations using run_triad_model.m
-% spktrain: Poisson spike train input over time
+% input: Poisson spike train input over time
 % Ps_E, Ps_I: excitatory (or inhibitory) conductance post-synapse due to
-%   spktrain
-% post_spktrain: spiking output over time
-% Vm: membrane potential of output neuron over time 
-[~,~,~,~,Vm_noreset,Ps_E,Ps_I,input, ~, I_syn_noreset, I_leak_noreset] = run_triad_model(0, 'manual_signal', spktrain, 'tmax', tmax, 'dt', dt, 'Pmax_e', Pmax_e, 'tau1i', tau1i, 'alpha', alpha);
+%   input
+% Vm_noreset: membrane potential of output neuron over time (no spiking)
+% I_syn_noreset: synaptic current produced by input
+% I_leak_noreset: leak current for output neuron
+output = run_triad_model(0, 'manual_signal', spktrain, 'tmax', tmax, 'dt', dt, 'Pmax_e', Pmax_e, 'tau1i', tau1i, 'alpha', alpha);
+
+Vm_noreset = output.Vm;
+Ps_E = output.Ps_E;
+Ps_I = output.Ps_I;
+input = output.input_spktrain;
+I_syn_noreset = output.I_syn;
+I_leak_noreset = output.I_leak;
 
 % Plot model behavior without Vm resets
 figure;

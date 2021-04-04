@@ -13,15 +13,19 @@ sigvec = 0:dt:siglength;
 tmax = 0.4;
 tvec = 0:dt:tmax;
 
-sinewave_spktrain_F = zeros(length(Fex), length(tvec)); % store spike trains with variable duration
-sinewave_V_F = zeros(length(Fex), length(tvec)); % store voltage trace with variable duration
-sinewave_Im_F = zeros(length(Fex), length(tvec)); % store current signals for variable duration
+sinewave_spktrain_F = zeros(length(Fex), length(tvec)); % store output spike trains with variable input frequency
+sinewave_V_F = zeros(length(Fex), length(tvec)); % store voltage trace with variable input frequency
+sinewave_Im_F = zeros(length(Fex), length(tvec)); % store current signals for variable input frequency
 
 for i = 1:length(Fex) % get spike trains and voltage trace for variable durations
-   sinewave_Im_F(i, 1:length(sigvec)) = max(0, Imex*sin(2*pi*Fex(i)*sigvec));
-   [~,~,~,post_spktrain,Vm] = run_triad_model(1, 'tmax', siglength, 'tbuffer', tmax-siglength, 'Pmax_e', 0, 'F', Fex(i), 'Im_amp', Imex);
+   
+    sinewave_Im_F(i, 1:length(sigvec)) = max(0, Imex*sin(2*pi*Fex(i)*sigvec));
+   output = run_triad_model(1, 'tmax', siglength, 'tbuffer', tmax-siglength, 'Pmax_e', 0, 'F', Fex(i), 'Im_amp', Imex);
+   
+   post_spktrain = output.post_spktrain;
    sinewave_spktrain_F(i,:) = post_spktrain(:);
-   sinewave_V_F(i,:) = Vm;
+   sinewave_V_F(i,:) = output.Vm;
+   
 end
 
 % Plot injected current and spiking outputs for each frequency

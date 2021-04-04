@@ -37,11 +37,11 @@ for freq = 1:length(F)
             
             % simulate output power of triad synapse (or cell given current
             % injection) using run_triad_model.m
-            [FC1,FC2,FC3] = run_triad_model(1, 'F', F(freq), 'tmax', tmax, 'Pmax_e', Pmax_e(tau), 'tau1i', tau1i(tau), 'Im_amp', Im_amp(tau));
+            output = run_triad_model(1, 'F', F(freq), 'tmax', tmax, 'Pmax_e', Pmax_e(tau), 'tau1i', tau1i(tau), 'Im_amp', Im_amp(tau));
             
-            FC_n(n) = FC1;
-            FC_a(n) = FC2;
-            FC_p(n) = FC3;
+            FC_n(n) = output.FC;
+            FC_a(n) = output.FC_avg;
+            FC_p(n) = output.FC_pct;
             
         end
         
