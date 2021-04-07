@@ -3,7 +3,7 @@
 % FFE or FFEI synaptic input.
 
 % Input characteristics
-PR = 100;
+PR = [100 100 0];
 F = logspace(log10(5), log10(1000), 50);
 dt = 1e-4; % time bins
 tmax = 5;
@@ -37,7 +37,8 @@ for freq = 1:length(F)
             
             % simulate output power of triad synapse (or cell given current
             % injection) using run_triad_model.m
-            output = run_triad_model(1, 'F', F(freq), 'tmax', tmax, 'Pmax_e', Pmax_e(tau), 'tau1i', tau1i(tau), 'Im_amp', Im_amp(tau));
+            input = generate_input(F(freq), 1, 0, 'tmax', tmax, 'PR', PR(tau),'Im_amp', Im_amp(tau));
+            output = run_triad_model(input, 1, 'Pmax_e', Pmax_e(tau), 'tau1i', tau1i(tau));
             
             FC_n(n) = output.FC;
             FC_a(n) = output.FC_avg;

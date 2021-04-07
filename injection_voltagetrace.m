@@ -18,9 +18,9 @@ sinewave_V_F = zeros(length(Fex), length(tvec)); % store voltage trace with vari
 sinewave_Im_F = zeros(length(Fex), length(tvec)); % store current signals for variable input frequency
 
 for i = 1:length(Fex) % get spike trains and voltage trace for variable durations
-   
-    sinewave_Im_F(i, 1:length(sigvec)) = max(0, Imex*sin(2*pi*Fex(i)*sigvec));
-   output = run_triad_model(1, 'tmax', siglength, 'tbuffer', tmax-siglength, 'Pmax_e', 0, 'F', Fex(i), 'Im_amp', Imex);
+   input = generate_input(Fex(i), 1, 0, 'PR', 0, 'tmax', siglength, 'tbuffer_end', tmax-siglength, 'Im_amp', Imex);
+   sinewave_Im_F(i,:) = input.Im;
+   output = run_triad_model(input, 1);
    
    post_spktrain = output.post_spktrain;
    sinewave_spktrain_F(i,:) = post_spktrain(:);

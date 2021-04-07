@@ -61,8 +61,8 @@ for freq = 1:length(F)
         
         for n = 1:num_inputs
             
-            % 
-            output = run_triad_model(1, 'F', F(freq), 'tmax', tmax, 'Pmax_e', Pmax_e(tau), 'tau1i', tau1i(tau), 'delay', delay(tau));
+            input = generate_input(F(freq), 1, 0, 'tmax', tmax);
+            output = run_triad_model(input, 1, 'Pmax_e', Pmax_e(tau), 'tau1i', tau1i(tau), 'delay', delay(tau));
             FC_n(n) = output.FC;
             FC_a(n) = output.FC_avg;
             FC_p(n) = output.FC_pct;

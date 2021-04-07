@@ -1,4 +1,4 @@
-function[spktrain] = alpha_voltagetrace(alpha, Pmax_e, tau1i)
+function[] = alpha_voltagetrace(alpha, Pmax_e, tau1i)
 % ALPHA_VOLTAGETRACE: Generates figures comparing spiking behavior of FFEI
 % triad synapse circuit models with different alpha (FFE, 1, 1.25, 2, 5)
 
@@ -21,7 +21,8 @@ spktrain(round(1/(4*F)/dt):round(1/F/dt):end) = 1;
 % Vm_noreset: membrane potential of output neuron over time (no spiking)
 % I_syn_noreset: synaptic current produced by input
 % I_leak_noreset: leak current for output neuron
-output = run_triad_model(0, 'manual_signal', spktrain, 'tmax', tmax, 'dt', dt, 'Pmax_e', Pmax_e, 'tau1i', tau1i, 'alpha', alpha);
+input = generate_input(F, 1, 0, 'manual_signal', spktrain, 'tmax', tmax, 'dt', dt);
+output = run_triad_model(input, 0, 'Pmax_e', Pmax_e, 'tau1i', tau1i, 'alpha', alpha);
 
 Vm_noreset = output.Vm;
 Ps_E = output.Ps_E;

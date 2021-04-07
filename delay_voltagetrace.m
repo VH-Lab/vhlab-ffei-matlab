@@ -18,7 +18,8 @@ rate = sin(2 * pi * tvec * F) * PR;
 %   spktrain
 % post_spktrain: spiking output over time
 % Vm: membrane potential of output neuron over time 
-output = run_triad_model(1, 'F', F, 'tmax', tmax, 'Pmax_e', Pmax_e, 'tau1i', tau1i, 'delay', delay);
+input = generate_input(F, 1, 0, 'tmax', tmax);
+output = run_triad_model(input, 1, 'Pmax_e', Pmax_e, 'tau1i', tau1i, 'delay', delay);
 
 post_spktrain = output.post_spktrain;
 Vm = output.Vm;

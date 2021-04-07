@@ -17,4 +17,6 @@ end
 
 % Generate FC figures (panels (B-D))
 disp('Generating comparisons of FFE vs FFEI over alpha...')
-alpha_fc(1);
+alpha_fc(0);
+
+

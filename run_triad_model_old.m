@@ -1,15 +1,23 @@
-function [output] = run_triad_model(modelinput, is_spike_present, varargin)
+function [output] = run_triad_model_old(is_spike_present, varargin)
 % RUN_TRIAD_MODEL: Performs simulations of retina-LGN 1-to-1 circuit in
-% response to an input specified by generate_input.m in a modelinput
-% struct. Returns FC at input frequency, FC over all frequencies,
-% normalized FC, Poisson spike train output, voltage trace, E/I synaptic
-% conductance, input spike train, summed noisy input spikes, synaptic
-% current, and leak current (contained in a struct (output)).
+% response to a Poisson input with a rectified sinusoidal rate. Returns
+% FC at input frequency, FC over all frequencies, normalized FC, Poisson
+% spike train output, voltage trace, E/I synaptic conductance, input spike
+% train, summed noisy input spikes, synaptic current, and leak current
+% (contained in a struct (output)).
 % Inputs can vary depending on which parameters are modified in the model
 % (see how assign.m in vhlab toolbox is used when calling functions).
 % When examining the behavior of the model, the parameter is_spike_present
 % determines whether the desired model is spiking (1, Vm resets at the
 % threshold) or non-spiking (0, Vm does not reset).
+
+
+% Input characteristics
+PR = 100;
+F = 50;
+dt = 1e-4; % time bins
+tmax = 5; % signal time
+tbuffer = 0; % "buffer" time after signal
 
 % Conductance parameters
 %Pmax_e = 1.6976e-7;
@@ -36,20 +44,59 @@ alpha = 1.25;
 % define noise parameters (if any)
 noise_base = 1.6976e-7/75;
 noise_level = 0; % scaling factor for base noise strength
+noise_rate = PR/pi;
+noise_N = 50; % number of noisy inputs
+
+% define parameters for rectified sinusoidal current injection (if any)
+Im_amp = 0;
+
+% define parameters for a specified spiking input e.g. spike train of
+% constant uniform rate, custom signal or noise (if any)
+manual_signal = 0;
+manual_noise = 0;
 
 % Assign values to any parameters specified in function call:
 assign(varargin{:});
 % typically: PR, F, tmax, dt, Pmax_e, tau1i, delay, alpha, Im_F, Im_amp...
 
-% Set input parameters according to modelinput struct (includes time
-% parameters for the trial)
-F = modelinput.F;
-dt = modelinput.dt;
-tvec = modelinput.tvec;
-input_spktrain = modelinput.signal;
-noisy_input = modelinput.noise;
-Im = modelinput.Im;
+% Time parameters that are adjusted after manual parameter assignment:
+t_total = tmax+tbuffer; % total trial length
+tsigvec = 0:dt:tmax; % time vector for signal
+tvec = 0:dt:t_total; % time vector for trial
 Nt = length(tvec); % number of time intervals
+
+% If sinusoidal direct current injection is present (Im_F and Im_amp are
+% assigned in function call), then nonzero Im is generated:
+Im = zeros(1,length(tvec));
+Im(1:length(tsigvec)) = max(Im_amp * sin(2*pi*F*tsigvec), 0);
+
+
+
+if manual_signal == 0 % if no manual spiking signal is provided ->
+    % Generate a Poisson spike train with input characteristics
+    spktimes = spiketrain_sinusoidal(PR, F, 0, 0, 0, tmax, dt);
+    input_spktrain = spiketimes2bins(spktimes, tvec);
+else
+    if length(manual_signal) == Nt
+        input_spktrain = manual_signal;
+    else
+        error(['Error: Manually-inputted signal is ' num2str(length(manual_signal)) ' time units in length, while trial is ' num2str(Nt) ' time units in length.'])
+    end
+end
+
+if manual_noise == 0
+    % Generate 50 noisy inputs
+    noisy_input = poisson_spiketrain(dt, noise_rate, t_total, 1);
+    for j=2:noise_N
+        noisy_input = noisy_input + poisson_spiketrain(dt, noise_rate, t_total, 1);
+    end
+else
+    if length(manual_noise) == Nt
+        noisy_input = manual_noise;
+    else
+        error(['Error: Manually-inputted noise is ' num2str(length(manual_noise)) ' time units in length, while trial is ' num2str(Nt) ' time units in length.'])
+    end
+end
 
 % Scale the noisy input magnitude by original 1.6976e-7/75 (same as in figure 4)
 [Ps_E_noise] = ppsc_constantsum(noisy_input, noise_level*noise_base, tau1e, tau2e, 0, tau2i, delay, dt);
