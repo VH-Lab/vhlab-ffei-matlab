@@ -6,3 +6,4 @@
 % same inputs. Perhaps provide custom inputs for both background noise and
 % signal, and generate all inputs in this script? For now, plotting of the
 % outputs from each layer also occurs in this script.
+
