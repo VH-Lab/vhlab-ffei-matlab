@@ -24,6 +24,7 @@ dt = 1e-4; % time bins
 tmax = 5; % signal time
 tbuffer_start = 0;
 tbuffer_end = 0; % "buffer" time after signal
+phase_shift = 0;
 
 % define noise parameters (if any)
 noise_N = 50; % number of noisy inputs
@@ -55,7 +56,7 @@ noise_rate = PR/pi; % (constant) firing rate of noise
 % If sinusoidal direct current injection is present (Im_amp is
 % assigned in function call), then nonzero Im is generated:
 Im = zeros(1,length(tvec));
-Im(Nbuffer_start+1:length(tsigvec)+Nbuffer_start) = max(Im_amp * sin(2*pi*F*tsigvec), 0);
+Im(Nbuffer_start+1:length(tsigvec)+Nbuffer_start) = max(Im_amp * sin(2*pi*F*tsigvec+phase_shift), 0);
 
 if manual_signal == 0 % if no manual spiking signal is provided ->
     

@@ -4,30 +4,27 @@
 L = 4; % number of layers in the circuit
 
 % Time and input ST parameters
+dt = 1e-4;
+PR = 100;
 F = 5;
 t_start = -0.5;
 t_end = 1;
 tvec = t_start:dt:t_end;
+Nt = length(tvec);
 
 
 % Conductance parameters
 Pmax_e = 1.6976e-7;
-tau1i = [0.020 0];
+tau1i = [0.020 0 0];
 
 
 % Set up vectors to store inputs to each layer and voltage at each layer
 % 1: no conductance between layers, 2: e only, 3: pffei
 inputs_1 = zeros(L+1,Nt);
-Vm_1 = zeros(L,Nt); % store membrane potential from each layer
-Vm_1(:,1) = V_reset; % initial membrane voltage is V_reset
 
 inputs_2 = zeros(L+1,Nt);
-Vm_2 = zeros(L,Nt); % store membrane potential from each layer
-Vm_2(:,1) = V_reset; % initial membrane voltage is V_reset
 
 inputs_3 = zeros(L+1,Nt);
-Vm_3 = zeros(L,Nt); % store membrane potential from each layer
-Vm_3(:,1) = V_reset; % initial membrane voltage is V_reset
 
 
 % Generate input to first layer using generate_input.m
@@ -129,7 +126,7 @@ for i = 1:L
     
     % 1/2 strength: FFEI 0.09, FFE 0.095; 1 strength: FFEI 0.18, FFE 0.19
     input.signal = inputs_1(i,:);
-    output_1 = run_triad_model(input, 1, 'Pmax_e', 0, 'noise_level', 1);
+    output_1 = run_triad_model(input, 1, 'Pmax_e', 0, 'tau1i', tau1i(3), 'noise_level', 1);
     input.signal = inputs_2(i,:);
     output_2 = run_triad_model(input, 1, 'Pmax_e', Pmax_e * 0.095, 'tau1i', tau1i(2), 'noise_level', 1);
     input.signal = inputs_3(i,:);
