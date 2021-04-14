@@ -19,6 +19,8 @@ FCpct_vec = zeros(3, length(F_vec));
 % 3) factor of Pmax relative to 1.6976e-7 S, and 4) whether or not
 % paired-ffei is the mode of transmission
 
+disp("Making comparisons between noise only, FFE, and FFEI circuits...")
+
 for i = 1:length(F_vec)
     
     if mod(i-1,5) == 0
@@ -104,6 +106,8 @@ Pmax_factor_2_ffe = [1/2 3/4 1 1.45 1.7]; % E only
 
 FC_vec_ffei = zeros(length(Pmax_factor_2_ffei), length(F_vec));
 FC_vec_ffe = zeros(length(Pmax_factor_2_ffei), length(F_vec));
+
+disp("Making comparisons over output power...")
 
 for i = 1:length(F_vec)
     

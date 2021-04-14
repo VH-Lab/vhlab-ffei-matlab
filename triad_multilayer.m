@@ -13,5 +13,11 @@ clear;
 disp('Generating FC figures...')
 multilayer_fc();
 
+clear;
+% Generate FC spectrum plots (panel I-K)
+disp('Generating FC spectrum figures...')
+multilayer_fc_changingF();
+
+
 
 
