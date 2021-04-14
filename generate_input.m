@@ -60,13 +60,13 @@ Im(Nbuffer_start+1:length(tsigvec)+Nbuffer_start) = max(Im_amp * sin(2*pi*F*tsig
 
 if manual_signal == 0 % if no manual spiking signal is provided ->
     
-    spktimes = spiketrain_sinusoidal(PR, F, 0, 0, 0, tmax, dt);
+    spktimes = spiketrain_sinusoidal(PR, F, phase_shift, 0, 0, tmax, dt);
     signal = spiketimes2bins(spktimes, tvec);
     
     if n_input>1 % if signal is comprised of n>1 inputs ->
         for i = 2:n_input
             % Generate a Poisson spike train with input characteristics
-            spktimes = spiketrain_sinusoidal(PR, F, 0, 0, 0, tmax, dt);
+            spktimes = spiketrain_sinusoidal(PR, F, phase_shift, 0, 0, tmax, dt);
             signal = signal + spiketimes2bins(spktimes, tvec);
         end
     end
