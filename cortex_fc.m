@@ -1,6 +1,6 @@
 % CORTEX_FC: Generates figures comparing output power at the input
 % modulation frequency of FFE vs. FFEI cortex circuit models in
-% response to Poisson inputs with rectified sinusoidal rate (Figure 8).
+% response to Poisson inputs with rectified sinusoidal rate (Figure 9).
 % (e.g. LGN->cortex transmission)
 % In FFEI case, the membrane time constant of the inhibitory interneuron is
 % varied.

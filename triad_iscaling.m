@@ -17,6 +17,9 @@ end
 
 % Generate FC figures (panels (B-D))
 disp('Generating comparisons of FFE vs FFEI over alpha...')
-alpha_fc(0);
+alpha_fc(0, -0.075);
+
+% Note: Panels E-I involve changing the parameters in line 20 and manually
+% measuring FC_F/FC_avg at F = 50Hz and F = 100Hz.
 
 

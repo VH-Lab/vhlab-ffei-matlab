@@ -9,7 +9,7 @@ function [output] = run_cortex_model(F, tau_m_I, varargin)
 %   (the sum of the inputs is scaled by Ps_I_scale).
 % The excitatory cell recieves the response of the inhibitory cell via
 % inhibitory transmission.
-% Note: associated with Figure 8.
+% Note: associated with Figure 9.
 
 % Time and input ST parameters
 PR = 100;
@@ -37,7 +37,8 @@ V_reset_E = -0.080; % -80mV
 V_e_E = -0.075; % -75mV
 V_th_E = -0.040; % -40mV
 Rm_E = 1.0e7; % membrane resistance
-tau_m_E = 1.0e-2; % membrane time constant
+Cm_E = 1.0e-9; % membrane capacitance
+tau_m_E = Rm_E*Cm_E; % membrane time constant
 V_syn_E_e = 0; % synaptic resting potential
 V_syn_E_i = -0.08; % synaptic resting potential
 
@@ -47,6 +48,7 @@ V_reset_I = -0.080;
 V_e_I = -0.075;
 Vth_factor = 1.2;
 Rm_I = 1.0e7;
+Cm_I = 1.0e-9;
 V_syn_I = 0;
 
 % Assign values to any parameters specified in function call:

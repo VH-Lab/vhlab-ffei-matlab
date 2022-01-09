@@ -17,10 +17,15 @@ rate = sin(2 * pi * tvec * F) * PR;
 %Pmax_e = 6.7903;
 if transmissiontype == 1
     Pmax_e = 1.6976e-7*0.47; % E only
+    %Pmax_e = 1.6976e-7*1.15; % E only
     tau1i = 0; % 50ms
+    Rm = 1e7;
 elseif transmissiontype == 2
     Pmax_e = 1.6976e-7*0.305; % FFEI
-    tau1i = 0.02; % 50ms
+    tau1i = 0.02; % 20ms
+    %Pmax_e = 1.6976e-7*0.44; % FFEI
+    %tau1i = 0.05; % 50ms
+    Rm = 1e7;
 else
     error('Error: Transmission type not correctly defined. Set input to 1 if examining FFE model, 2 if examining FFEI model.')
 end
@@ -32,7 +37,7 @@ end
 % post_spktrain: spiking output over time
 % Vm: membrane potential of output neuron over time 
 input = generate_input(F, 1, 0, 'tmax', tmax);
-output = run_triad_model(input, 1, 'Pmax_e', Pmax_e, 'tau1i', tau1i);
+output = run_triad_model(input, 1, 'Pmax_e', Pmax_e, 'tau1i', tau1i, 'Rm', Rm);
 
 % Extract simulation behavior from the output struct
 post_spktrain = output.post_spktrain;

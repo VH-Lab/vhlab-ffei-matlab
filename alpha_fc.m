@@ -1,7 +1,9 @@
-function [] = alpha_fc(noise_level)
+function [] = alpha_fc(noise_level, V_e)
 %ALPHA_FC: Generates figures comparing output power at the input
 % modulation frequency of triad synapse circuit models with different
 % inhibitory scaling (Figure 3).
+% The noise level (panels E-G) and equilibrium membrane potential (V_e)
+% (panels H-I) can be modulated via the inputs to alpha_fc.
 
 
 % Input characteristics
@@ -16,7 +18,11 @@ Pmax_e_scaled = 1.6976e-7;
 
 switch noise_level
     case 0
-        Pmax_e = [1.6976e-7*0.15 1.6976e-7*0.42 1.6976e-7*0.8 1.6976e-7*1.2 1.6976e-7*1.4 1.6976e-7*1.12 1.6976e-7*0.95 1.6976e-7*0.72 1.6976e-7*0.53 1.6976e-7*0.47 0]; % for alpha set 1, no noise (last 2 values for E only and noise only)
+        if V_e == -0.075
+            Pmax_e = [1.6976e-7*0.15 1.6976e-7*0.42 1.6976e-7*0.8 1.6976e-7*1.2 1.6976e-7*1.4 1.6976e-7*1.12 1.6976e-7*0.95 1.6976e-7*0.72 1.6976e-7*0.53 1.6976e-7*0.47 0]; % for alpha set 1, no noise (last 2 values for E only and noise only), Ve = -75mV
+        else
+            Pmax_e = [1.6976e-7*0.13 1.6976e-7*0.42 1.6976e-7*0.8 1.6976e-7*1.2 1.6976e-7*1.45 1.6976e-7*1.17 1.6976e-7*0.95 1.6976e-7*0.72 1.6976e-7*0.55 1.6976e-7*0.37 0]; % for alpha set 1, no noise, Ve = -60mV or -50mV
+        end
     case 0.5
         Pmax_e = [1.6976e-7*0.135 1.6976e-7*0.41 1.6976e-7*0.8 1.6976e-7*1.21 1.6976e-7*1.3885 1.6976e-7*1.24 1.6976e-7*0.935 1.6976e-7*0.7 1.6976e-7*0.56 1.6976e-7*0.36 0]; % for alpha set 1, noise level x0.5
     case 1
@@ -63,7 +69,7 @@ for freq = 1:length(F)
             %output = run_triad_model_old(1, 'dt', dt, 'F', F(freq), 'tmax', tmax, 'Pmax_e', Pmax_e(tau), 'tau1i', tau1i(tau), 'noise_level', noise_level, 'alpha', alpha(tau));
             
             input = generate_input(F(freq), 1, 0, 'dt', dt, 'tmax', tmax);
-            output = run_triad_model(input, 1, 'Pmax_e', Pmax_e(tau), 'tau1i', tau1i(tau), 'noise_level', noise_level, 'alpha', alpha(tau));
+            output = run_triad_model(input, 1, 'Pmax_e', Pmax_e(tau), 'tau1i', tau1i(tau), 'noise_level', noise_level, 'alpha', alpha(tau), 'V_e', V_e);
             
             
             FC_n(n) = output.FC;

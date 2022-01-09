@@ -25,7 +25,7 @@ V_reset = -0.080; % -80mV
 V_e = -0.075; % -75mV
 V_th = -0.040; % -40mV
 Rm = 1.0e7; % membrane resistance
-tau_m = 1.0e-2; % time
+Cm = 1.0e-9; % membrane capacitance
 V_syn_e = 0; % synaptic resting potential
 V_syn_i = -0.08; % synaptic resting potential
 
@@ -40,6 +40,8 @@ noise_level = 0; % scaling factor for base noise strength
 % Assign values to any parameters specified in function call:
 assign(varargin{:});
 % typically: PR, F, tmax, dt, Pmax_e, tau1i, delay, alpha, Im_F, Im_amp...
+
+tau_m = Rm*Cm; % membrane time constant; depends on potential assignment of Rm, Cm in function call
 
 % Set input parameters according to modelinput struct (includes time
 % parameters for the trial)

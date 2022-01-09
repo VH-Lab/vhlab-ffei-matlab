@@ -2,7 +2,7 @@ function [] = cortex_voltagetrace(F)
 
 % CORTEX_VOLTAGETRACE: Generates figures comparing spiking behavior of FFEI
 % multi-input circuit models in response to inputs with different
-% rectified sinusoidal modulation rate (PR = 100Hz) (Figure 8).
+% rectified sinusoidal modulation rate (PR = 100Hz) (Figure 9).
 
 % Time parameters
 t_end = 0.6;
