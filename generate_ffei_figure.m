@@ -17,7 +17,11 @@ switch figure_num
     case 7
         triad_ampagabanmda;
     case 8
+        triad_depression;
+    case 9
         cortex_ffei;
+    case 10
+        cortex_AMPA;
     otherwise
         error('Error: Not a valid figure number. Please enter a figure number ranging from 1-8.')
 end

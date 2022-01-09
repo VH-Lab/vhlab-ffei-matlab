@@ -10,3 +10,5 @@ injection_voltagetrace;
 clear;
 disp('Generating comparisons of FFE vs FFEI vs current injection...')
 injection_fc;
+
+% Generate FC figures for E only cell (panels E-G)

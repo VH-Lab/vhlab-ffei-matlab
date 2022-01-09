@@ -19,6 +19,8 @@ disp('Generating comparisons of FFE vs FFEI over output power...')
 triad_fc(2);
 clear;
 
+% Generate voltage traces (Supplement panels A-B)
+
 
 
 
