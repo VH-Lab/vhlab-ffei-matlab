@@ -16,12 +16,12 @@ xor_fc(pi)
 clear;
 
 
-% Generate spike traces for Figure 6supp (panel A)
+% Generate spike traces for Supp. Fig. 2 (panel A)
 disp('Generating voltage trace panels (Figure 6supp)...')
 xor_spiketrace(5,pi/2)
 clear;
 
-% Generate FC figures for Figure 6supp (panels (B-D))
+% Generate FC figures for Supp. Fig. 2 (panels (B-D))
 disp('Generating comparisons of FFE vs FFEI (Figure 6supp)...')
 xor_fc(pi/2)
 clear;
