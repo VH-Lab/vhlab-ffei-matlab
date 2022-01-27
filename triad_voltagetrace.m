@@ -18,7 +18,7 @@ rate = sin(2 * pi * tvec * F) * PR;
 if transmissiontype == 1
     Pmax_e = 1.6976e-7*0.47; % E only
     %Pmax_e = 1.6976e-7*1.15; % E only
-    tau1i = 0; % 50ms
+    tau1i = 0; % E only
     Rm = 1e7;
 elseif transmissiontype == 2
     Pmax_e = 1.6976e-7*0.305; % FFEI
@@ -26,8 +26,12 @@ elseif transmissiontype == 2
     %Pmax_e = 1.6976e-7*0.44; % FFEI
     %tau1i = 0.05; % 50ms
     Rm = 1e7;
+elseif transmissiontype == 3
+    Pmax_e = 1.6976e-7*0.44; % FFEI
+    tau1i = 0.05; % 50ms
+    Rm = 1e7;
 else
-    error('Error: Transmission type not correctly defined. Set input to 1 if examining FFE model, 2 if examining FFEI model.')
+    error('Error: Transmission type not correctly defined. Set input to 1 if examining FFE model, 2 if examining FFEI model with I fall tau = 0.02, 3 if examining FFEI model with I fall tau = 0.05.')
 end
 
 % Run triad synapse simulations using run_triad_model.m
