@@ -1,58 +1,60 @@
-function [] = ang_plot(plot_type, is_noise_present)
-% ANG_PLOT: Performs simulations of retina-LGN 1-to-1 circuit in
+function [] = ang_depression_plot(plot_type)
+% ANG_DEPRESSION_PLOT: Performs simulations of retina-LGN 1-to-1 circuit in
 % response to Poisson spike train inputs with rectified sinusoidal rate,
-% given transmission via 1) AMPARs, 2) AMPARs + NMDARs, or 3) AMPARs +
-% NMDARs + GABARs.
+% given transmission via 1) AMPARs + NMDARs with depression, or 2) AMPARs +
+% NMDARs + GABARs with depression.
+%
 % Inputs specify the following:
-%   plot_type:          0: plot voltage traces for input with F = 50Hz
+%   plot_type:          0: plot voltage traces for input with F = 20Hz
 %                       1: plot FC at F, overall FC, and normalized FC at F
 %                          for a range of frequencies F
-%   is_noise_present:   0: no background activity
-%                       1: low level excitatory background activity (scaled
-%                          as in Figure 5)
+%
+% Interspike times in seconds and s2/s1 ratio of synaptic currents are
+% measured from literature (Chen et al. 2002, Blitz and Regehr 2005)
 
 if plot_type == 0 % voltage trace plot
-    F = 50;
+    F = 20;
+    tmax = 2;
 elseif plot_type == 1 % fc plot
     F = logspace(log10(5), log10(1000), 50);
+    tmax = 5;
 else
     error("Error: Invalid plot type (0 or 1). Please see help text for plot type options.")
 end
 
-if is_noise_present == 0
-    noise_strength = 0; % no noise
-elseif is_noise_present == 1
-    noise_strength = 1; % low level excitatory noise
-else
-    error("Error: Invalid value for is_noise_present (boolean).")
-end
-
-% Noisy input parameters
-tau1e = 0.02; % 20ms % taufall
-tau2e = 0.001; % 1ms % taurise
-
 % Input characteristics
-PR = 100;
+PR = 50;
+phase_shift = 0;
 dt = 1e-4; % time bins
-tmax = 0.5;
+tvec = 0:dt:tmax;
+Nt = length(tvec);
 num_inputs = 10;
 
 % Conductance parameters - AMPA parameters for excitatory, GABA parameters
 % for inhibitory
-Pmax_e_a = 1.6976e-7;
-Pmax_e_n = 0.5 * Pmax_e_a;
-Pmax_factor = [4 0.3 0.09 0];
-figure_title = ["AMPA", 'AMPA-NMDA', 'AMPA-NMDA/GABA', ['noise only x ' num2str(noise_strength)]];
-tau1e_a = 0.00072;
-tau2e_a = 0.0007; % AMPA conductance parameters
-tau1e_n = 0.100;
-tau2e_n = 0.0032; % NMDA conductance parameters
-is_inhibition_present = [0 0 1 0];
-ampa_only = [1 0 0 0];
-delay = 0.001; % 1ms delay
-alpha = 1.25; % inhibitory scaling coefficient
+Pmax_e_base = 3e-6;
+Pmax_e_a = 2 * Pmax_e_base;
+Pmax_e_n = 0.2 * Pmax_e_base;
+Pmax_factor = [2.3 4.7];
 
-tvec = 0:dt:tmax;
+figure_title = ["AMPA+NMDA",'AMPA+NMDA, GABA_A + GABA_B'];
+tau1e_a = 0.0016;
+tau2e_a = 0.0007; % AMPA conductance parameters
+tau1e_n = 0.090;
+tau2e_n = 0.0032; % NMDA conductance parameters
+
+is_inhibition_present = [0 1];
+tau1i_a = 0.006;
+tau2i_a = 0.0006; % GABA_A conductance parameters
+tau1i_b = 0.150;
+tau2i_b = 0.03; % GABA_B conductance parameters (approximate) -> NOTE that GABA_B actually has an additional slow fall time constant...
+delay = 0.001; % 1ms delay
+alpha = 1; % inhibitory scaling coefficient
+
+% Accounting for GABA_B currents...
+Pmax_i = 1.5*generate_balanced_EI([Pmax_e_a Pmax_e_n], [tau1e_a tau1e_n], [tau2e_a tau2e_n], [3 2], [tau1i_a tau1i_b], [tau2i_a tau2i_b]);
+Pmax_i_a = Pmax_i(1)*0.8;
+Pmax_i_b = Pmax_i(2)*0.45;
 
 % define integrate fire variables
 V_reset = -0.080; % -80mV
@@ -61,10 +63,18 @@ V_th = -0.040; % -40mV
 Rm = 1.0e7; % membrane resistance
 tau_m = 1.0e-2; % time
 V_syn_e = 0; % synaptic resting potential (excitatory)
-V_syn_i = -0.08; % synaptic resting potential (inhibitory)
-rmgs = 0.25; % original: 0.05
-Nt = length(tvec); % number of time intervals
+V_syn_i_a = -0.08; % synaptic resting potential (inhibitory, GABA_A)
+V_syn_i_b = -0.1; % synaptic resting potential (inhibitory,  GABA_B)
 
+
+% Channel adaptation data
+load('depression_model_AMPA');
+load('depression_model_NMDA');
+load('depression_model_GABA');
+ 
+Dampa = depression_model_AMPA;
+Dnmda = depression_model_NMDA;
+Dgaba = depression_model_GABA;
 
 FC = zeros(length(is_inhibition_present), length(F)); % store FCs
 FC_avg = zeros(length(is_inhibition_present), length(F)); % store avg power for E/I transmission
@@ -87,24 +97,39 @@ for freq = 1:length(F)
         for n = 1:num_inputs
             
             % Generate input + noise spike trains
-            input = generate_input(F(freq), 1, 1, 'tmax', tmax);
-            spktrain = input.signal;
-            noisy_input = input.noise;
+            s1 = spiketrain_sinusoidal(PR, F(freq), phase_shift, 0, 0, tmax, dt); % Generate Poisson spike times
+            spktrain = spiketimes2bins(s1, tvec); % Convert to spike train over time bins
             
-            [Ps_E_noise] = ppsc_constantsum(noisy_input, noise_strength*1.6976e-7/75, tau1e, tau2e, 0, 0, 0, dt);
+            % apply depression model to input spike train s1, and compute postsynaptic
+            % conductances
+            syncurrs_ampa = depression_model_comp(s1, Dampa.a0, Dampa.f, Dampa.ftau, Dampa.d, Dampa.dtau);
+            spktrain_ampa = spktrain;
+            spktrain_ampa(find(spktrain_ampa)) = syncurrs_ampa;
+            P_ampa = synaptic_conductance(spktrain_ampa, Pmax_e_a, tau1e_a, tau2e_a, dt, 0);
             
-            % push-pull conductance triggered by Poisson spike train
-            if ampa_only(tau) == 1 % case 1: ampa only conductance
-                [Ps_E, Ps_I] = ppsc_constantsum(spktrain, Pmax_e_a*Pmax_factor(tau), tau1e_a, tau2e_a, 0, 0, delay, dt);
-            elseif Pmax_factor(tau) == 0 % case 4: noise only
-                Ps_E = zeros(1, length(tvec));
-                Ps_I = zeros(1, length(tvec));
-            else % case 2 and 3: ampa+nmda (w or w/o gaba) conductance
-                [Ps_E, Ps_I] = ppsc_constantsum_multcond(spktrain, [Pmax_e_a Pmax_e_n]*Pmax_factor(tau), [tau1e_a tau1e_n], [tau2e_a tau2e_n], is_inhibition_present(tau), delay, dt);
-            end
+            % the above is repeated for the other channel types
             
-            % Simulate voltage behavior of a neuron recieving push-pull conductance
-            % input
+            % NMDA
+            
+            syncurrs_nmda = depression_model_comp(s1, Dnmda.a0, Dnmda.f, Dnmda.ftau, Dnmda.d, Dnmda.dtau);
+            spktrain_nmda = spktrain;
+            spktrain_nmda(find(spktrain_nmda)) = syncurrs_nmda;
+            P_nmda = synaptic_conductance(spktrain_nmda, Pmax_e_n, tau1e_n, tau2e_n, dt, 0);
+            
+            % GABA_A, B
+            
+            syncurrs_gaba = depression_model_comp(s1, Dgaba.a0, Dgaba.f, Dgaba.ftau, Dgaba.d, Dgaba.dtau);
+            spktrain_gaba = spktrain;
+            spktrain_gaba(find(spktrain_gaba)) = syncurrs_gaba;
+            P_gabaA = synaptic_conductance(spktrain_gaba, Pmax_i_a, tau1i_a, tau2i_a, dt, delay);
+            P_gabaB = synaptic_conductance(spktrain_gaba, Pmax_i_b, tau1i_b, tau2i_b, dt, delay);
+            
+            Ps_E = (P_ampa+P_nmda)*Pmax_factor(tau);
+            Ps_I = P_gabaA+P_gabaB*Pmax_factor(tau);
+
+            
+            % Simulate voltage behavior of a neuron recieving input via
+            % adaptive channels
             
             Vm = zeros(Nt, 1); % store membrane voltage at each time point
             Vm(1) = V_reset; % initial membrane voltage is V_reset
@@ -122,14 +147,16 @@ for freq = 1:length(F)
                     post_spktrain(t) = 1;
                 else
                     I_leak = -(Vm(t) - V_e)/Rm;
-                    I_syn = (Ps_E(t) + Ps_E_noise(t)) * (V_syn_e - Vm(t)) + alpha * Ps_I(t) * (V_syn_i - Vm(t));
+                    I_syn_e =  Pmax_factor(tau) * (P_ampa(t) + P_nmda(t)) * (V_syn_e - Vm(t));
+                    I_syn_i = is_inhibition_present(tau) * Pmax_factor(tau) * alpha * (P_gabaA(t) * (V_syn_i_a - Vm(t)) + P_gabaB(t) * (V_syn_i_b - Vm(t)));
+                    I_syn = I_syn_e + I_syn_i;
                     dvdt = Rm * (I_leak + I_syn) / tau_m;
-                    %dvdt = (-(Vm(t) - V_e) - (Rm * (Ps_E(t) * (Vm(t) - V_syn_e) + alpha * Ps_I(t) * (Vm(t) - V_syn_i)))) / tau_m;
                     Vm(t+1) = Vm(t) + dt * dvdt;
+                    
                 end
             end
             
-            postratevec = post_spktrain/dt;
+            postratevec = post_spktrain(ceil(Nt/tmax):end)/dt;
             
             FC_all = fouriercoeffs(postratevec, dt);
             
@@ -152,7 +179,7 @@ for freq = 1:length(F)
             
             figure;
             subplot(3,1,1)
-            plot(tvec, spktrain*50, '-', 'Color', [0.8 0.8 0])
+            plot(tvec, spktrain*PR/2, '-', 'Color', [0.8 0.8 0])
             hold on;
             plot(tvec, signal)
             ylabel('Firing rate (Hz)')
@@ -164,12 +191,11 @@ for freq = 1:length(F)
             plot(tvec, Ps_E)
             hold on;
             plot(tvec, Ps_I)
-            plot(tvec, Ps_E_noise)
-            ylabel('Conductance (S)')
+            ylabel('Synaptic conductance (S)')
             xlabel('Time (s)')
-            legend('Ps_E', 'Ps_I', 'Ps_E_,_n_o_i_s_e')
+            legend('Excitatory (AMPA + NMDA)', 'Inhibitory (GABA)')
             box off;
-            
+                    
             subplot(3,1,3)
             plot(tvec, signal * (0.1/PR) - 0.1, ':', 'Color', [1 0.733 0.318])
             hold on;
@@ -182,6 +208,7 @@ for freq = 1:length(F)
                 plot(tspk, 0, 'x', 'Color', 'red')
             end
             ylabel('Output membrane potential (V)')
+            
         end
         
     end
@@ -191,61 +218,53 @@ end
 if plot_type == 1
     
     figure;
-    plot(F, FC(1, :), 'k-')
+    plot(F, FC(1, :), 'r-')
     hold on;
-    plot(F, FC(2, :), 'r-')
-    plot(F, FC(3, :), 'b-')
-    plot(F, FC(4, :), 'g-')
+    plot(F, FC(2, :), 'b-')
     
     title(["Avg. power at the input modulation frequency of the postsynaptic", ...
-        "firing rate, given AMPA transmission alone, AMPA-NMDA transmission alone,", ...
-        "or feed-forward AMPA-NMDA/GABA transmission"])
+    "firing rate, given adapting feed-forward AMPA-NMDA/GABA transmission"])
     
     xlabel("Input modulation frequency (Hz)")
     ylabel(["FC magnitude at the given input", ...
         "modulation frequency (Hz) (FC_F)"])
     
-    legend("AMPA", "AMPA-NMDA", "AMPA-NMDA/GABA", ['noise only x ' num2str(noise_strength)])
+    legend('AMPA+NMDA','AMPA+NMDA, GABA_A + GABA_B')
     set(gca, 'XScale', 'log')
     box off;
     
     
     figure;
-    plot(F, FC_avg(1, :), 'k-')
+    plot(F, FC_avg(1, :), 'r-')
     hold on;
-    plot(F, FC_avg(2, :), 'r-')
-    plot(F, FC_avg(3, :), 'b-')
-    plot(F, FC_avg(4, :), 'g-')
+    plot(F, FC_avg(2, :), 'b-')
     
     title(["Avg. overall power of the postsynaptic firing rate for inputs with", ...
-        "different modulation frequencies, given AMPA transmission alone, AMPA-NMDA", ...
-        "transmission alone, or feed-forward AMPA-NMDA/GABA transmission"])
+    "different modulation frequencies, given adapting feed-forward AMPA-NMDA/GABA transmission"])
     xlabel("Input modulation frequency (Hz)")
     ylabel("Avg. FC magnitude over entire spectrum (Hz) (FC_a_v_g)")
     ylimits = ylim;
     ylim([0 ylimits(2)]);
-    legend("AMPA", "AMPA-NMDA", "AMPA-NMDA/GABA", ['noise only x ' num2str(noise_strength)])
+    legend('AMPA+NMDA','AMPA+NMDA, GABA_A + GABA_B')
     set(gca, 'XScale', 'log')
     box off;
     
     
     
     figure;
-    plot(F, FC_pct(1, :), 'k-')
+    plot(F, FC_pct(1, :), 'r-')
     hold on;
-    plot(F, FC_pct(2, :), 'r-')
-    plot(F, FC_pct(3, :), 'b-')
-    plot(F, FC_pct(4, :), 'g-')
+    plot(F, FC_pct(2, :), 'b-')
     plot([5 1e3],[1 1],'--', 'Color', [0.5 0.5 0.5])
     
     title(["(Avg. power at input modulation frequency)/(Avg. power overall) of the", ...
-        "postsynaptic firing rate, given AMPA transmission alone, AMPA-NMDA", ...
-        "transmission alone, or feed-forward AMPA-NMDA/GABA transmission"])
+    "postsynaptic firing rate, given adapting feed-forward AMPA-NMDA/GABA transmission"])
+ 
     xlabel("Input modulation frequency (Hz)")
     ylabel("FC_F/FC_a_v_g")
     ylimits = ylim;
     ylim([0 ylimits(2)]);
-    legend("AMPA", "AMPA-NMDA", "AMPA-NMDA/GABA", ['noise only x ' num2str(noise_strength)])
+    legend('AMPA+NMDA','AMPA+NMDA, GABA_A + GABA_B')
     set(gca, 'XScale', 'log')
     box off;
 end

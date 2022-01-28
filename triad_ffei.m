@@ -20,6 +20,7 @@ triad_fc(2);
 clear;
 
 % Generate voltage traces (Supp. Fig. 1B (panel A is identical to Fig. 1A)
+disp('Generating supplementary voltage trace panels...')
 triad_voltagetrace(3);
 clear;
 
