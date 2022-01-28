@@ -1,4 +1,4 @@
-function [output] = run_cortex_model(F, tau_m_I, varargin)
+function [output] = run_cortex_model(F, tau_m_I, I_ampa, varargin)
 % RUN_CORTEX_MODEL: Simulates the response to multiple paired-EI inputs.
 % All spiking inputs are generated from the same sinusoidal signal,
 % which has a certain amplitude - denoting peak firing rate of signal (PR)
@@ -25,12 +25,13 @@ tau1e = 0.020; % 20ms % taufall
 tau2e = 0.001; % 1ms % taurise
 tau1i = 0.020; % 20ms
 tau2i = 0.001; % 1ms
+tau1e_i = 0.0016; % taufall for I cell when AMPA input --> I
 alpha = 1.25; % inhibitory scaling coefficient
 
 % Define input, input scaling parameters
 n_inputs = 100;
 Ps_E_scale = 0.02; % scaling factor for summed input->E
-Ps_I_scale = 0.01; % scaling factor for summed input->I
+Ps_I_scale = 0.006; % scaling factor for summed input->I
 
 % define LIF parameters - E cell
 V_reset_E = -0.080; % -80mV
@@ -80,7 +81,20 @@ end
 Ps_E_total = sum(Ps_E,1) * Ps_E_scale;
 
 % Conductance of each input, scaled - I
-Ps_I_total = sum(Ps_E,1) * 0.6 * Ps_I_scale;
+if I_ampa == 0
+    
+    Ps_I_total = sum(Ps_E,1) * Ps_I_scale;
+    
+else
+    Ps_I = zeros(100, Nt);
+    for i = 1:100
+        Ps_I(i,:) = synaptic_conductance(inputs(i,:), Pmax_e, tau1e_i, tau2e, dt);
+    end
+    Ps_I_total = sum(Ps_I,1) * Ps_I_scale;
+    
+end
+
+
 
 
 % Initialize vectors to store voltage and spikes over time for both cells

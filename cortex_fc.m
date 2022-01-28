@@ -39,7 +39,7 @@ for i = 1:length(F_vec)
     
     for j = 1:n_trials
         for tau = 1:length(tau_m_I)
-            output = run_cortex_model(F_vec(i), tau_m_I(tau), 'Pmax_e', Pmax_e, 'Pmax_i', Pmax_i(tau));
+            output = run_cortex_model(F_vec(i), tau_m_I(tau), 0, 'Pmax_e', Pmax_e, 'Pmax_i', Pmax_i(tau));
             FC(tau,j) = output.FC;
             FCavg(tau,j) = output.FC_avg;
             FCpct(tau,j) = output.FC_pct;

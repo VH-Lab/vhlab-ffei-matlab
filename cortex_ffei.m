@@ -9,7 +9,7 @@ clear;
 F = [5 20 90];
 disp('Generating voltage trace panels...')
 for i = 1:length(F)
-    cortex_voltagetrace(F(i));
+    cortex_voltagetrace(F(i), 0);
 end
 
 clear;
