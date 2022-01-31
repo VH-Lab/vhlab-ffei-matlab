@@ -17,5 +17,5 @@ clear;
 
 % Generate FC figures (panels (C-F))
 disp('Generating comparisons of FFE vs FFEI over taum of I cell...')
-cortex_fc;
+cortex_ampa_fc;
 clear;
